@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>深海垂钓</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="cv"></canvas>
+
+  <div id="ui">
+    <div class="hud hud-tl">
+      <div class="depth-box">
+        <div class="depth-val"><span id="depthNum">0</span><small id="depthUnit">m</small><span class="depth-max" id="depthMax">/ 200m</span></div>
+        <div class="zone-line"><b id="zoneName">透光层</b><span id="zoneRange">0 – 200m</span></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">鱼钩耐久</span>
+        <div class="bar"><i id="duraFill" class="fill dura"></i></div>
+        <span class="bar-num" id="duraNum">100</span>
+      </div>
+      <div class="bait-row">
+        <span class="bait-dot" id="baitDot"></span>
+        <span id="baitName">蚯蚓</span>
+        <span class="bait-count" id="baitCount">x0</span>
+      </div>
+    </div>
+
+    <div class="hud hud-zone hidden" id="zoneBanner">
+      <div class="zb-title" id="zbTitle"></div>
+      <div class="zb-sub" id="zbSub"></div>
+    </div>
+
+    <div class="hud hud-tr">
+      <div class="money">¥ <span id="moneyNum">0</span></div>
+      <div class="stat-line">已钓 <b id="statCaught">0</b> · 鱼王 <b id="statKings">0</b> · 纪录 <b id="statBest">0</b>kg</div>
+    </div>
+
+    <div class="hud hud-bottom">
+      <div id="fightBox" class="fight-box hidden">
+        <div class="fish-status" id="fishStatus">平静</div>
+        <div class="tension-wrap">
+          <div class="zone warn"></div>
+          <div class="zone danger"></div>
+          <div class="bar big"><i id="tensionFill" class="fill tension"></i></div>
+        </div>
+        <div class="tension-label">鱼线张力 <b id="tensionNum">0</b> / <span id="tensionMax">80</span></div>
+        <div class="dist-wrap" id="distWrap">
+          <span>离船 <b id="distNum">0</b> m<i id="distSub"></i></span>
+          <div class="bar"><i id="distFill" class="fill land"></i></div>
+        </div>
+        <div class="dist-wrap" id="baitWrap">
+          <span>鱼饵完好 <b id="baitHpNum">100</b>%</span>
+          <div class="bar"><i id="baitHpFill" class="fill bait"></i></div>
+        </div>
+      </div>
+      <div id="chargeBox" class="charge-box hidden">
+        <div class="charge-label">抛投力度 <b id="chargeNum">0</b>%　<span id="chargeDir">向右</span></div>
+        <div class="bar big"><i id="chargeFill" class="fill charge"></i></div>
+      </div>
+      <div id="promptBox" class="prompt hidden"></div>
+    </div>
+
+    <div class="hud hud-buttons">
+      <button class="btn-panel" data-panel="inventory">背包 <b id="bagCount">0</b></button>
+      <button class="btn-panel" data-panel="shop">商店</button>
+      <button class="btn-panel" data-panel="codex">图鉴</button>
+      <button class="btn-panel" data-panel="help">帮助</button>
+      <button class="btn-panel btn-debug" data-panel="debug">调试</button>
+    </div>
+
+    <div id="touchControls" class="touch hidden">
+      <button class="tbtn" id="btnUp">▲<small>上浮</small></button>
+      <button class="tbtn tbtn-reel hidden" id="btnReel">收线</button>
+      <button class="tbtn" id="btnDown">▼<small>下沉</small></button>
+    </div>
+
+    <div id="actionRow" class="action-row">
+      <button id="btnLeft" class="btn-main btn-cast">◀ 向左抛竿</button>
+      <button id="btnRight" class="btn-main btn-cast">向右抛竿 ▶</button>
+      <button id="btnRetract" class="btn-ghost hidden">收竿</button>
+    </div>
+
+    <div id="resultOverlay" class="result hidden"></div>
+  </div>
+
+  <div id="panels" class="hidden"></div>
+  <div id="portrait" class="hidden">请横屏游玩</div>
+</div>
+
+<script src="js/data/depth.js"></script>
+<script src="js/data/fish.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/core/rng.js"></script>
+<script src="js/core/storage.js"></script>
+<script src="js/core/sfx.js"></script>
+<script src="js/game/economy.js"></script>
+<script src="js/game/dive.js"></script>
+<script src="js/game/fight.js"></script>
+<script src="js/game/state.js"></script>
+<script src="js/game/render.js"></script>
+<script src="js/ui/hud.js"></script>
+<script src="js/ui/panels.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
