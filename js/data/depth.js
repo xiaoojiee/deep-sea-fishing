@@ -7,8 +7,12 @@ FG.CFG = {
   H_PX_PER_M: 8.5,
   WORLD_W: 2560,
   BOAT_X: 1280,
+  BOAT_SCREEN_X: 92,    // 渔船固定钉在屏幕左边这个位置
+  BOAT_SCALE: 1.6,      // 渔船 + 角色整体放大
+  FISH_SCALE: 2.7,      // 鱼整体放大（相对最初版本放大一倍）
   CAST_MIN: 150,
   CAST_MAX: 640,
+  CAST_DIR: 1,          // 只能朝一边抛竿：1=向右，-1=向左
   CHARGE_TIME: 1.1,
   CAM_ANCHOR: 0.40,
   CAM_MARGIN: 5,
@@ -18,7 +22,8 @@ FG.CFG = {
   LINE_MIN_PX: 700,
   LINE_SLACK: 1.55,
   HOOK_R: 2.4,
-  MAX_SHADOWS: 16
+  FISH_SWIM_MUL: 2.2,   // 鱼影横向游速倍率（游得快才来得及游进游出）
+  MAX_SHADOWS: 20
 };
 
 /*
