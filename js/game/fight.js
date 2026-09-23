@@ -8,7 +8,8 @@ FG.Fight = {
     var rod = game.rod();
     var line = game.line();
     var maxStam = FG.staminaOf(sp, shadow.weight);
-    var dir = shadow.x >= game.boat.x ? 1 : -1;
+    // 只朝一边抛竿，所以鱼也统一往那一侧跑，不会从船左边窜出屏幕
+    var dir = FG.CFG.CAST_DIR >= 0 ? 1 : -1;
     var hDist = Math.abs(shadow.x - game.boat.x);
     var fishY = shadow.y;
     var d3 = Math.sqrt(hDist * hDist + Math.pow(fishY - FG.CFG.SURFACE, 2));
