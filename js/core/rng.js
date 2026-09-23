@@ -48,10 +48,10 @@ FG.strengthOf = function (sp, weight) {
   return sp.strength * Math.pow(weight / sp.avg, 1.1);
 };
 
-// 贴图大小完全由体重决定：0.05kg≈8px，400kg≈64px，鱼王会明显更大
+// 贴图大小完全由体重决定：0.05kg≈10px，400kg≈48px，鱼王会明显更大
 FG.fishSizePx = function (weight) {
   var t = Math.pow(FG.RNG.clamp(weight, 0.05, 400) / 400, 0.42);
-  return 8 + 56 * t;
+  return 10 + 38 * t;
 };
 
 // 鱼的实际身长（含体型系数：鳗形更长、扁平型更短）
