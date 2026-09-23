@@ -87,7 +87,7 @@ FG.Game = {
     return FG.RNG.clamp(this.charge.t / FG.CFG.CHARGE_TIME, 0, 1);
   },
 
-  beginCharge: function (dir) {
+  beginCharge: function () {
     if (this.state !== 'IDLE' || this.castLock > 0) return;
     if (!FG.Economy.canCast(this)) {
       this.prompt = '没有鱼饵了，去商店买一些吧';
@@ -96,7 +96,7 @@ FG.Game = {
       return;
     }
     if (this.charge) return;
-    this.charge = { dir: dir >= 0 ? 1 : -1, t: 0 };
+    this.charge = { dir: FG.CFG.CAST_DIR >= 0 ? 1 : -1, t: 0 };
     this.boat.rodDir = this.charge.dir;
     FG.sfx.tone(220, 0.06, 'sine', 0.03);
   },
