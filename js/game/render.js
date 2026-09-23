@@ -88,7 +88,8 @@ FG.render = {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.camY = 0;
-    this.camX = FG.CFG.BOAT_X - FG.CFG.W / 2;
+    // 渔船钉在屏幕左边，相机横向不再移动
+    this.camX = FG.CFG.BOAT_X - FG.CFG.BOAT_SCREEN_X;
     this.stars = [];
     for (var i = 0; i < 150; i++) {
       this.stars.push({
@@ -116,6 +117,18 @@ FG.render = {
     this.oy = (h - FG.CFG.H * this.scale) / 2;
   },
 
+  /* 贴图落点吸附到设备像素网格：
+     最近邻采样本身是锐利的，但每帧落在半像素上会来回蹭（抖）。
+     只要把目标坐标对齐到真实屏幕像素，就同时做到「锐利」和「不抖」。 */
+  snapX: function (w) {
+    var k = this.scale * this.dpr;
+    return k > 0 ? Math.round((w - this.camX) * k) / k + this.camX : w;
+  },
+  snapY: function (w) {
+    var k = this.scale * this.dpr;
+    return k > 0 ? Math.round((w - this.camY) * k) / k + this.camY : w;
+  },
+
   toWorld: function (clientX, clientY) {
     var r = this.canvas.getBoundingClientRect();
     return {
@@ -133,14 +146,10 @@ FG.render = {
   updateCamera: function (game, dt) {
     var ty = FG.RNG.clamp((game.hook ? game.hook.y : FG.CFG.SURFACE) - FG.CFG.H * FG.CFG.CAM_ANCHOR,
       0, this.camMaxY());
-    var bx = game.boat ? game.boat.x : FG.CFG.BOAT_X;
-    var hxw = game.hook ? game.hook.x : bx;
-    var camMaxX = Math.max(0, FG.CFG.WORLD_W - FG.CFG.W);
-    var tx = FG.RNG.clamp((bx + hxw) / 2 - FG.CFG.W / 2, 0, camMaxX);
+    this.camX = FG.CFG.BOAT_X - FG.CFG.BOAT_SCREEN_X;
 
     var k = dt > 0 ? Math.min(1, 3.4 * dt) : 0;
     this.camY += (ty - this.camY) * k;
-    this.camX += (tx - this.camX) * k;
   },
 
   draw: function (game, dt) {
@@ -453,14 +462,38 @@ FG.render = {
     var bob = Math.sin(this.t * 1.6) * 3 + Math.sin(this.t * 0.9) * 1.6;
     var y = FG.CFG.SURFACE + bob;
     var dir = game.boat.rodDir || 1;
+    var S = FG.CFG.BOAT_SCALE;
 
     ctx.save();
-    ctx.translate(bx, y);
+    ctx.translate(this.snapX(bx), this.snapY(y));
+    ctx.scale(S, S);
 
     ctx.fillStyle = 'rgba(0,0,0,.25)';
     ctx.beginPath();
     ctx.ellipse(0, 6, 60, 7, 0, 0, 6.2832);
     ctx.fill();
+
+    // 钓鱼人先画，再画船体，这样腿会被船舷挡住，像站在船里而不是站在船前面
+    var person = FG.Art && FG.Art.fisherCache;
+    if (person) {
+      var pw = FG.ART.fisher.w * FG.ART.fisher.scale;
+      var ph = FG.ART.fisher.h * FG.ART.fisher.scale;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(person, 14 - pw / 2, 4 - ph, pw, ph);
+    } else {
+      ctx.fillStyle = '#2f4257';
+      ctx.beginPath();
+      ctx.ellipse(12, -16, 9, 13, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = '#e8c9a0';
+      ctx.beginPath();
+      ctx.arc(12, -32, 8, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = '#c94f4f';
+      ctx.beginPath();
+      ctx.ellipse(12, -38, 12, 4, 0, 0, 6.2832);
+      ctx.fill();
+    }
 
     ctx.beginPath();
     ctx.moveTo(-56, -6);
@@ -485,20 +518,7 @@ FG.render = {
     ctx.fillRect(-43, -25, 12, 9);
     ctx.fillRect(-26, -25, 12, 9);
 
-    ctx.fillStyle = '#2f4257';
-    ctx.beginPath();
-    ctx.ellipse(12, -16, 9, 13, 0, 0, 6.2832);
-    ctx.fill();
-    ctx.fillStyle = '#e8c9a0';
-    ctx.beginPath();
-    ctx.arc(12, -32, 8, 0, 6.2832);
-    ctx.fill();
-    ctx.fillStyle = '#c94f4f';
-    ctx.beginPath();
-    ctx.ellipse(12, -38, 12, 4, 0, 0, 6.2832);
-    ctx.fill();
-
-    var rx = 12, ry = -30;
+    var rx = person ? 16 : 12, ry = person ? -36 : -34;
     var tipX = rx + dir * 74, tipY = ry - 62;
     ctx.strokeStyle = '#e0d0b0';
     ctx.lineWidth = 3;
@@ -509,7 +529,10 @@ FG.render = {
     ctx.stroke();
     ctx.restore();
 
-    this.rodTip = { x: bx + rx + dir * 74, y: y + ry - 62 };
+    this.rodTip = {
+      x: this.snapX(bx) + (rx + dir * 74) * S,
+      y: this.snapY(y) + (ry - 62) * S
+    };
   },
 
   drawDebris: function (game) {
@@ -606,8 +629,8 @@ FG.render = {
     for (var i = 0; i < game.shadows.length; i++) {
       var s = game.shadows[i];
       var y = s.y + Math.sin(s.phase) * 3;
-      var sz = s.sizePx * 1.35;
-      FG.drawFishShape(ctx, s.sp, s.x, y, sz, s.dir, 0.45, s.king);
+      var sz = s.sizePx * 1.35 * FG.CFG.FISH_SCALE;
+      FG.drawAnyFish(ctx, s.sp, this.snapX(s.x), this.snapY(y), sz, s.dir, 0.45, s.king);
 
       if (s.attract > 0.04) {
         ctx.save();
@@ -660,9 +683,10 @@ FG.render = {
     if (f) {
       tensionRatio = FG.RNG.clamp(f.tension / f.breakAt, 0, 1);
       var fdir = f.dir;
-      var sz = FG.fishSizePx(f.weight) * 1.5;
+      var sz = FG.fishSizePx(f.weight) * 1.5 * FG.CFG.FISH_SCALE;
       var body = f.stamina > 0 ? f.stamina / f.maxStamina : 0;
-      FG.drawFishShape(ctx, f.sp, hx + fdir * sz * 0.5, hy + Math.sin(f.time * 5) * 4,
+      FG.drawAnyFish(ctx, f.sp,
+        this.snapX(hx + fdir * sz * 0.5), this.snapY(hy + Math.sin(f.time * 5) * 4),
         sz, -fdir, 0.72 + 0.28 * (1 - body), f.king);
     }
 
@@ -819,8 +843,7 @@ FG.render = {
     ctx.font = 'bold 15px sans-serif';
     ctx.globalAlpha = 0.35 + 0.3 * Math.abs(Math.sin(this.t * 2));
     ctx.fillStyle = '#9fe8ff';
-    ctx.fillText('◀ 按住左边向左蓄力抛竿', FG.RNG.clamp(bx - 260, 130, FG.CFG.W - 130), by + 40);
-    ctx.fillText('按住右边向右蓄力抛竿 ▶', FG.RNG.clamp(bx + 260, 130, FG.CFG.W - 130), by + 40);
+    ctx.fillText('按住蓄力 · 松开抛竿 ▶', FG.RNG.clamp(bx + 250, 130, FG.CFG.W - 130), by + 40);
     ctx.restore();
   },
 
