@@ -69,12 +69,18 @@ FG.Dive = {
     } else {
       depth = FG.RNG.rand(sp.dmin, sp.dmax);
     }
-    var dir = FG.RNG.sign();
-    var hx = game.hook ? game.hook.x : FG.CFG.BOAT_X;
-    var x;
-    if (anywhere) x = FG.RNG.rand(vb.x0 + 40, vb.x1 - 40);
-    else if (FG.RNG.chance(0.55)) x = FG.RNG.clamp(hx + FG.RNG.rand(-320, 320), vb.x0 + 40, vb.x1 - 40);
-    else x = FG.RNG.rand(vb.x0 + 40, vb.x1 - 40);
+    // 鱼一律从屏幕外游进来；开局那批铺满整个可见区，免得一开始空荡荡
+    var sx0 = FG.render.camX, sx1 = FG.render.camX + FG.CFG.W;
+    var dir, x;
+    if (anywhere) {
+      dir = FG.RNG.sign();
+      x = FG.RNG.rand(sx0 - 300, sx1 + 300);
+    } else {
+      var fromLeft = FG.RNG.chance(0.5);
+      dir = fromLeft ? 1 : -1;
+      x = fromLeft ? sx0 - FG.RNG.rand(60, 300) : sx1 + FG.RNG.rand(60, 300);
+    }
+    void vb;
 
     game.shadows.push({
       sp: sp,
@@ -83,7 +89,7 @@ FG.Dive = {
       depth: depth,
       y: FG.depthToY(depth),
       x: x,
-      vx: dir * sp.speed * FG.RNG.rand(0.7, 1.3),
+      vx: dir * sp.speed * FG.RNG.rand(0.7, 1.3) * FG.CFG.FISH_SWIM_MUL,
       sizePx: FG.fishSizePx(size.weight),
       phase: Math.random() * 6.28,
       dir: dir > 0 ? 1 : -1,
@@ -253,7 +259,7 @@ FG.Dive = {
 
     game.shadowTimer -= dt;
     if (game.shadowTimer <= 0) {
-      game.shadowTimer = FG.RNG.rand(0.8, 1.8);
+      game.shadowTimer = FG.RNG.rand(0.5, 1.2);
       if (game.shadows.length < FG.CFG.MAX_SHADOWS) this.spawnShadow(game, false);
     }
 
@@ -261,12 +267,19 @@ FG.Dive = {
     game.fastHook = speedFactor <= 0.04 && hook.strain < 0.4;
     game.nearShadow = false;
 
+    var sx0 = FG.render.camX, sx1 = FG.render.camX + FG.CFG.W;
+
     for (var i = 0; i < game.shadows.length; i++) {
       var s = game.shadows[i];
 
-      if (Math.abs(s.y - hook.y) > 300) s.leave += dt;
+      // 只要还在屏幕里就绝不消失；游出屏幕之后才允许被回收
+      var offscreen = (s.x < sx0 || s.x > sx1);
+      if (s.x < sx0 - 420 || s.x > sx1 + 420) { game.shadows.splice(i, 1); i--; continue; }
+
+      // 水层差太远的鱼，也要等它游出屏幕之后才走，避免在玩家眼前凭空消失
+      if (offscreen && Math.abs(s.y - hook.y) > 300) s.leave += dt;
       else s.leave = 0;
-      if (s.leave > 2.0) { game.shadows.splice(i, 1); i--; continue; }
+      if (s.leave > 1.5) { game.shadows.splice(i, 1); i--; continue; }
 
       s.phase += dt * 3.2;
 
@@ -282,21 +295,18 @@ FG.Dive = {
       }
 
       if (lured) {
-        var spd = s.sp.speed * 1.15;
+        var spd = s.sp.speed * 1.15 * FG.CFG.FISH_SWIM_MUL;
         s.vx += ((dx / dist) * spd - s.vx) * 2.6 * dt;
         s.y += (dy / dist) * spd * dt;
         s.y += Math.sin(s.phase * 0.7) * 9 * dt;
       } else {
-        var maxV = s.sp.speed * 1.3;
+        var maxV = s.sp.speed * 1.3 * FG.CFG.FISH_SWIM_MUL;
         if (Math.abs(s.vx) > maxV) s.vx = (s.vx > 0 ? 1 : -1) * maxV;
         s.y += Math.sin(s.phase * 0.4) * 18 * dt;
       }
 
       s.x += s.vx * dt;
       s.dir = s.vx >= 0 ? 1 : -1;
-
-      if (s.x < vb.x0 - 60) s.x = vb.x1 + 50;
-      if (s.x > vb.x1 + 60) s.x = vb.x0 - 50;
 
       var yMin = FG.depthToY(s.sp.dmin), yMax = FG.depthToY(s.sp.dmax);
       s.y = FG.RNG.clamp(s.y, yMin, yMax);
