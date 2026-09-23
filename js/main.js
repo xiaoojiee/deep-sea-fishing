@@ -40,13 +40,9 @@
       game.input.up = down; e.preventDefault();
     } else if (k === 'ArrowDown' || k === 'KeyS') {
       game.input.down = down; e.preventDefault();
-    } else if (k === 'ArrowLeft' || k === 'KeyA') {
+    } else if (k === 'ArrowLeft' || k === 'KeyA' || k === 'ArrowRight' || k === 'KeyD') {
       e.preventDefault();
-      if (down) { if (!e.repeat) { FG.sfx.resume(); game.beginCharge(-1); } }
-      else game.releaseCharge();
-    } else if (k === 'ArrowRight' || k === 'KeyD') {
-      e.preventDefault();
-      if (down) { if (!e.repeat) { FG.sfx.resume(); game.beginCharge(1); } }
+      if (down) { if (!e.repeat) { FG.sfx.resume(); game.beginCharge(); } }
       else game.releaseCharge();
     } else if (k === 'Space') {
       e.preventDefault();
@@ -95,21 +91,28 @@
     hud.init();
     panels.init();
 
-    var btnLeft = document.getElementById('btnLeft');
+    // 贴图：后台加载，加载完自动切换（没加载出来就继续用矢量画法）
+    if (FG.Art) {
+      try {
+        var seed = parseInt(localStorage.getItem('fishing_fisher') || '', 10);
+        if (!isFinite(seed)) { seed = Math.floor(Math.random() * 1e9); localStorage.setItem('fishing_fisher', String(seed)); }
+        FG.Art.pickFisher(seed);
+      } catch (e) { FG.Art.pickFisher(0); }
+      FG.Art.load(function () { });
+    }
+
     var btnRight = document.getElementById('btnRight');
-    [[btnLeft, -1], [btnRight, 1]].forEach(function (pair) {
-      var el = pair[0], dir = pair[1];
-      if (!el) return;
-      el.addEventListener('pointerdown', function (e) {
+    if (btnRight) {
+      btnRight.addEventListener('pointerdown', function (e) {
         e.preventDefault();
         FG.sfx.init(); FG.sfx.resume();
-        game.beginCharge(dir);
+        game.beginCharge();
       });
-      el.addEventListener('pointerup', function (e) { e.preventDefault(); game.releaseCharge(); });
-      el.addEventListener('pointerleave', function () { game.releaseCharge(); });
-      el.addEventListener('pointercancel', function () { game.cancelCharge(); });
-      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    });
+      btnRight.addEventListener('pointerup', function (e) { e.preventDefault(); game.releaseCharge(); });
+      btnRight.addEventListener('pointerleave', function () { game.releaseCharge(); });
+      btnRight.addEventListener('pointercancel', function () { game.cancelCharge(); });
+      btnRight.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    }
     document.getElementById('btnRetract').onclick = function () { game.retract(); };
 
     bindHold(document.getElementById('btnUp'), function () { game.input.up = true; }, function () { game.input.up = false; });
@@ -135,8 +138,7 @@
       FG.sfx.init(); FG.sfx.resume();
       if (panels.isOpen()) return;
       if (game.state !== 'IDLE') return;
-      var w = render.toWorld(e.clientX, e.clientY);
-      game.beginCharge(w.x >= game.boat.x ? 1 : -1);
+      game.beginCharge();
     });
 
     // 松手即抛：长按时间决定抛投距离
