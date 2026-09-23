@@ -14,7 +14,7 @@ FG.HUD = {
       'fightBox', 'fishStatus', 'tensionFill', 'tensionNum', 'tensionMax',
       'distWrap', 'distFill', 'distNum', 'distSub', 'baitWrap', 'baitHpNum', 'baitHpFill',
       'chargeBox', 'chargeNum', 'chargeFill', 'chargeDir',
-      'promptBox', 'resultOverlay', 'btnLeft', 'btnRight', 'btnRetract', 'touchControls', 'btnReel'];
+      'promptBox', 'resultOverlay', 'btnRight', 'btnRetract', 'touchControls', 'btnReel'];
     for (var i = 0; i < ids.length; i++) this.el[ids[i]] = document.getElementById(ids[i]);
     this.isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   },
@@ -84,7 +84,6 @@ FG.HUD = {
       e.baitCount.textContent = 'x' + game.baitCount();
     }
 
-    this.show('btnLeft', st === 'IDLE');
     this.show('btnRight', st === 'IDLE');
     this.show('btnRetract', st === 'DIVE');
     this.show('fightBox', st === 'FIGHT');
@@ -133,7 +132,7 @@ FG.HUD = {
     var prompt = game.prompt;
     if (!prompt && st === 'IDLE' && !game.charge) {
       this.idleHint += dt;
-      if (this.idleHint > 1.0) prompt = '按住水面蓄力，松开抛竿：按左边往左，按右边往右（或按住 ← →）';
+      if (this.idleHint > 1.0) prompt = '按住水面蓄力，松开抛竿（长按决定抛多远）';
     } else {
       this.idleHint = 0;
     }
@@ -188,7 +187,7 @@ FG.HUD = {
         var c2 = cv.getContext('2d');
         c2.clearRect(0, 0, 200, 90);
         c2.save();
-        FG.drawFishShape(c2, sp, 104, 45, FG.fishDrawSize(sp, r.catch.weight, 172), 1, 1, r.catch.king);
+        FG.drawAnyFish(c2, sp, 104, 45, FG.fishDrawSize(sp, r.catch.weight, 172), 1, 1, r.catch.king);
         c2.restore();
       }
     } else {
