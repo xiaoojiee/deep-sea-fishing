@@ -372,7 +372,7 @@ FG.Panels = {
       ctx.clearRect(0, 0, cv.width, cv.height);
       ctx.save();
       if (locked) ctx.globalAlpha = 0.18;
-      FG.drawFishShape(ctx, sp, size, size / 2, FG.fishDrawSize(sp, weight, size), 1, 1, king);
+      FG.drawAnyFish(ctx, sp, size, size / 2, FG.fishDrawSize(sp, weight, size), 1, 1, king);
       ctx.restore();
     }
   },
